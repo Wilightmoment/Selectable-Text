@@ -3,6 +3,7 @@ import {
   UIManager,
   Platform,
   type ViewStyle,
+  type NativeTouchEvent,
 } from 'react-native';
 
 const LINKING_ERROR =
@@ -10,9 +11,16 @@ const LINKING_ERROR =
   Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
-
+type Selection = {
+  key: string;
+  range: Array<number>;
+  text: string;
+}
 type SelectableTextProps = {
-  color: string;
+  menuItems: Array<String>;
+  onSelection: (
+    event: NativeTouchEvent & { nativeEvent: Selection }
+  ) => void;
   style: ViewStyle;
 };
 

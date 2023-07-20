@@ -6,7 +6,13 @@ import { SelectableTextView } from 'react-native-selectable-text';
 export default function App() {
   return (
     <View style={styles.container}>
-      <SelectableTextView color="#32a852" style={styles.box} />
+      <SelectableTextView
+        menuItems={['Comment', 'Height']}
+        onSelection={event => {
+          console.log(event.nativeEvent)
+        }}
+        style={styles.box}
+      />
     </View>
   );
 }
@@ -16,10 +22,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#0c9',
   },
   box: {
-    width: 60,
+    width: '50%',
     height: 60,
-    marginVertical: 20,
   },
 });
