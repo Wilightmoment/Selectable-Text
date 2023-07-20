@@ -22,6 +22,8 @@ type SelectableTextProps = {
     event: NativeTouchEvent & { nativeEvent: Selection }
   ) => void;
   style: ViewStyle;
+  value: string;
+  fontSize?: string
 };
 
 const ComponentName = 'SelectableTextView';
