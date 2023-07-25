@@ -16,13 +16,23 @@ type Selection = {
   range: Array<number>;
   text: string;
 }
+type Sentence = {
+  start_time: number;
+  end_time: number;
+  content: string;
+  index: number;
+}
 type SelectableTextProps = {
   menuItems: Array<String>;
-  onSelection: (
+  onSelection?: (
     event: NativeTouchEvent & { nativeEvent: Selection }
   ) => void;
+  onClick?: (event: NativeTouchEvent & { nativeEvent: Sentence }) => void
+  sentences: Sentence[]
+  playingIndex?: number;
+  playingColor?: string;
+  textColor?: string;
   style: ViewStyle;
-  value: string;
   fontSize?: string
 };
 

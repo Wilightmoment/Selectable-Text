@@ -1,19 +1,8 @@
 package com.selectabletext
 
-//import android.R
-
-import android.content.Context
-import android.graphics.Color
-import android.text.Spannable
-import android.text.SpannableStringBuilder
-import android.text.style.ForegroundColorSpan
-import android.util.AttributeSet
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
-import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableArray
@@ -23,88 +12,48 @@ import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.uimanager.events.RCTEventEmitter
 
-
-data class Sentence(
-  val start_time: Int,
-  val end_time: Int,
-  val content: String,
-  val index: Int,
-)
-val paragraph_test = arrayOf(
-  Sentence(start_time = 0, end_time = 10, content = "this is first sentence", index = 1),
-  Sentence(start_time = 11, end_time = 15, content = " and im' second", index = 2)
-)
-
-class CustomEditText : AppCompatTextView {
-  constructor(context: Context?) : super(context!!) {
-    this.setTextIsSelectable(true)
-//    TextViewCompat.setAutoSizeTextTypeWithDefaults(this, 1)
-//    this.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-  }
-  constructor(context: Context?, attrs: AttributeSet?) : super(context!!, attrs) {}
-  constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context!!, attrs, defStyleAttr) {}
-  private val spannableBuilder = SpannableStringBuilder()
-  private var sentences: Array<Sentence> = arrayOf()
-  var sentenceIndexMap: Map<Int, List<Int>> = mutableMapOf()
-  fun setSentences(sentences: Array<Sentence> = paragraph_test) {
-    this.sentences = sentences
-    var lastCount = 0
-    sentences.forEachIndexed {currentIndex, sentence ->
-      this.spannableBuilder.append(sentence.content)
-      val sentenceIndexArray: List<Int> = sentence.content.toCharArray().mapIndexed { charIndex, _ ->
-        charIndex + lastCount
-      }
-      sentenceIndexMap += Pair(currentIndex, sentenceIndexArray)
-      lastCount = sentenceIndexArray.size
-    }
-    this.text = this.spannableBuilder
-
-
-  }
-
-  fun changePlayingSentence(index: Int) {
-    this.spannableBuilder.clearSpans()
-    val startIndex = this.sentences.indexOfFirst {
-      it.index == index
-    }
-    if (startIndex == -1) return
-    var spannableStart = 0
-    for ((_index, sentence) in this.sentences.withIndex()) {
-      if (_index == startIndex) break
-      spannableStart += sentence.content.length
-    }
-    val spannableEnd = spannableStart + this.sentences[startIndex].content.length
-    this.spannableBuilder.setSpan(ForegroundColorSpan(Color.BLUE), spannableStart, spannableEnd, Spannable.SPAN_EXCLUSIVE_INCLUSIVE)
-    this.setSentences(this.sentences)
-  }
-}
-
-class SelectableTextViewManager : SimpleViewManager<CustomEditText>() {
+class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
   override fun getName() = "SelectableTextView"
-
-  override fun createViewInstance(reactContext: ThemedReactContext): CustomEditText {
-    val textView = CustomEditText(reactContext)
-    textView.setSentences()
-    textView.changePlayingSentence(2)
-    return textView
-  }
-
-  private fun createPragraph() {
-
+  override fun createViewInstance(reactContext: ThemedReactContext): SelectableText {
+    return SelectableText(reactContext)
   }
 
   @ReactProp(name = "fontSize")
-  fun setFontSize(textView: CustomEditText, fontSize: String) {
-
+  fun setFontSize(textView: SelectableText, fontSize: String) {
     textView.textSize = fontSize.toFloat()
   }
-  @ReactProp(name = "value")
-  fun setText(textView: CustomEditText, value: String) {
-//    textView.setText(value)
+  @ReactProp(name = "sentences")
+  fun setSentences(textView: SelectableText, sentences: ReadableArray) {
+    val sentenceList = mutableListOf<Sentence>()
+    for (currentIndex in 0 until sentences.size()) {
+      val item = sentences.getMap(currentIndex)
+      sentenceList.add(Sentence(
+        start_time = item.getInt("start_time"),
+        end_time = item.getInt("end_time"),
+        content = item.getString("content") ?: "",
+        index = item.getInt("index")
+      ))
+    }
+    textView.setSentences(sentenceList.toTypedArray())
+  }
+
+  @ReactProp(name = "textColor")
+  fun setTextColor(textView: SelectableText, color: String) {
+    textView.setTextColor(color)
+  }
+
+  @ReactProp(name = "playingColor")
+  fun setPlayingColor(textView: SelectableText, color: String) {
+    textView.setPlayingBGColor(color)
+  }
+
+  @ReactProp(name = "playingIndex")
+  fun setPlayingIndex(textView: SelectableText, index: Int) {
+    textView.changePlayingSentence(index)
   }
 
   @ReactProp(name = "menuItems")
-  fun setMenuItems(textView: CustomEditText, items: ReadableArray) {
+  fun setMenuItems(textView: SelectableText, items: ReadableArray) {
     val result: MutableList<String> = ArrayList(items.size())
     for (i in 0 until items.size()) {
       result.add(items.getString(i))
@@ -112,7 +61,7 @@ class SelectableTextViewManager : SimpleViewManager<CustomEditText>() {
     registerSelectionListener(result.toTypedArray(), textView)
   }
 
-  private fun registerSelectionListener(menuItems: Array<String?>, textView: CustomEditText) {
+  private fun registerSelectionListener(menuItems: Array<String?>, textView: SelectableText) {
     textView.customSelectionActionModeCallback = object : ActionMode.Callback {
       override fun onPrepareActionMode(mode: ActionMode?, menu: Menu): Boolean {
         // Called when action mode is first created. The menu supplied
@@ -153,7 +102,7 @@ class SelectableTextViewManager : SimpleViewManager<CustomEditText>() {
     }
   }
 
-  fun onSelectNativeEvent(view: CustomEditText, eventType: String?, content: String?, selectionStart: Int, selectionEnd: Int, selectedSentences: MutableSet<Int>) {
+  fun onSelectNativeEvent(view: SelectableText, eventType: String?, content: String?, selectionStart: Int, selectionEnd: Int, selectedSentences: MutableSet<Int>) {
     val event = Arguments.createMap()
     event.putString("eventType", eventType)
     event.putString("content", content)
@@ -176,7 +125,12 @@ class SelectableTextViewManager : SimpleViewManager<CustomEditText>() {
         "phasedRegistrationNames" to mapOf(
           "bubbled" to "onSelection"
         )
-      )
+      ),
+      "topClickSentence" to mapOf(
+        "phasedRegistrationNames" to mapOf(
+          "bubbled" to "onClick"
+        )
+      ),
     )
   }
 }
