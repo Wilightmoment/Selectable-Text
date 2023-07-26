@@ -2,6 +2,8 @@ package com.selectabletext
 
 import android.content.Context
 import android.graphics.Color
+import android.text.Layout
+import android.text.StaticLayout
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.TextPaint
@@ -10,7 +12,6 @@ import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.BackgroundColorSpan
 import android.util.AttributeSet
-import android.util.Log
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
@@ -28,7 +29,6 @@ data class Sentence(
 
 class CustomClickableSpan(private val clickedSentence: Sentence, private val context: Context?) : ClickableSpan() {
   override fun onClick(view: View) {
-    Log.d("ClickableSpan", "Clicked text: $clickedSentence")
     val event = Arguments.createMap()
     event.putString("content", clickedSentence.content)
     event.putInt("index", clickedSentence.index)
@@ -62,6 +62,26 @@ class SelectableText: AppCompatTextView {
   private var playingIndex = 0
   var sentenceIndexMap: Map<Int, List<Int>> = mutableMapOf()
 
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    val width = MeasureSpec.getSize(widthMeasureSpec)
+    val height = measureContentHeight(text.toString(), paint, width)
+    val density = this.resources.displayMetrics.density
+    val event = Arguments.createMap()
+    event.putDouble("width", (width / density).toDouble())
+    event.putDouble("height", (height / density).toDouble())
+    // Dispatch
+    val reactContext = context as ReactContext
+    reactContext
+      .getJSModule(RCTEventEmitter::class.java)
+      .receiveEvent(this.id, "topMeasure", event)
+  }
+  private fun measureContentHeight(text: String, paint: TextPaint, width: Int): Int {
+    val layout = StaticLayout(text, paint, width, Layout.Alignment.ALIGN_NORMAL, 1.0f, 0.0f, false)
+    return layout.height
+  }
+
+
   fun setPlayingBGColor(hex: String) {
     this.spannableBuilder.removeSpan(this.playingBGColorSpan)
     this.playingBGColorSpan = BackgroundColorSpan(Color.parseColor(hex))
@@ -79,16 +99,6 @@ class SelectableText: AppCompatTextView {
     this.sentences = sentences
     var lastCount = 0
     sentences.forEachIndexed {currentIndex, sentence ->
-      val clickableSpan = object : ClickableSpan() {
-        override fun onClick(view: View) {
-          Log.d("onclick", "click")
-        }
-
-        override fun updateDrawState(ds: TextPaint) {
-          super.updateDrawState(ds)
-          ds.isUnderlineText = false
-        }
-      }
       this.spannableBuilder.append(sentence.content, CustomClickableSpan(sentence, this.context), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
       val sentenceIndexArray: List<Int> = sentence.content.toCharArray().mapIndexed { charIndex, _ ->
         charIndex + lastCount

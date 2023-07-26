@@ -131,6 +131,11 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
           "bubbled" to "onClick"
         )
       ),
+      "topMeasure" to mapOf(
+        "phasedRegistrationNames" to mapOf(
+          "bubbled" to "onMeasure"
+        )
+      ),
     )
   }
 }

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { StyleSheet, View } from 'react-native';
 import { SelectableTextView } from 'react-native-selectable-text';
@@ -9,13 +9,13 @@ const sentences = [
 ];
 
 export default function App() {
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    console.log('size: ', size);
+  }, [size]);
   return (
-    <View
-      style={styles.container}
-      onLayout={(event) => {
-        console.log(event.nativeEvent.layout);
-      }}
-    >
+    <View style={{backgroundColor: "#0c9"}}>
       <SelectableTextView
         menuItems={['Comment', 'Height']}
         playingIndex={1}
@@ -24,9 +24,10 @@ export default function App() {
         onSelection={(event) => {
           console.log('onSelection: ', event.nativeEvent);
         }}
+        onMeasure={(event) => setSize(event.nativeEvent)}
         onClick={(event) => console.log('onClick: ', event.nativeEvent)}
         sentences={sentences}
-        style={styles.box}
+        style={{ height: size.height }}
         fontSize="16"
       />
     </View>
@@ -35,10 +36,14 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1,
+    backgroundColor: '#09c',
   },
   box: {
-    backgroundColor: 'rgba(255, 255, 255, .1)',
-    height: 60,
+    backgroundColor: 'rgba(255, 0, 255, 1)',
+    // height: 60,
+    flexBasis: 'auto',
+    // flex: 1,
+    // height: "auto"
   },
 });
