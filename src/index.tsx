@@ -12,10 +12,15 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 type Selection = {
-  key: string;
-  range: Array<number>;
-  text: string;
+  content: string;
+  eventType: string;
+  selectedSentences: Array<Sentence>;
+  selectionStart?: number;
+  selectionEnd?: number;
 };
+type ClickResult = {
+  selectedSentences: Array<Sentence>
+}
 type Sentence = {
   start_time: number;
   end_time: number;
@@ -25,7 +30,7 @@ type Sentence = {
 type SelectableTextProps = {
   menuItems: Array<String>;
   onSelection?: (event: NativeTouchEvent & { nativeEvent: Selection }) => void;
-  onClick?: (event: NativeTouchEvent & { nativeEvent: Sentence }) => void;
+  onClick?: (event: NativeTouchEvent & { nativeEvent: ClickResult }) => void;
   onMeasure?: (
     event: NativeTouchEvent & { nativeEvent: { width: number; height: number } }
   ) => void;
@@ -33,7 +38,7 @@ type SelectableTextProps = {
   playingIndex?: number;
   playingColor?: string;
   textColor?: string;
-  style: ViewStyle;
+  style?: ViewStyle;
   fontSize?: string;
 };
 
