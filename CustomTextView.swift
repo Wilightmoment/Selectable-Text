@@ -14,7 +14,7 @@ struct Sentence {
     let index: Int
 }
 
-class CustomTextView: UITextView, UITextViewDelegate {
+class CustomTextView: UITextView {
     private var sentences: [Sentence] = []
     private var playingIndex = 0
     private let attributedString = NSMutableAttributedString()
@@ -32,8 +32,6 @@ class CustomTextView: UITextView, UITextViewDelegate {
     private func setupTextView() {
         self.isEditable = false
         self.isScrollEnabled = false
-        self.translatesAutoresizingMaskIntoConstraints = false
-//        self.backgroundColor = UIColor(ciColor: .gray)
     }
     
     private func clearBackgroundColor() {
@@ -113,6 +111,6 @@ class CustomTextView: UITextView, UITextViewDelegate {
             attributedString.addAttribute(.backgroundColor, value: self.attributedStringBGColor, range: nsRange)
         }
         self.attributedText = self.attributedString
-//        self.sizeToFit()
+        self.sizeToFit()
     }
 }

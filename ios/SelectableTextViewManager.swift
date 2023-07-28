@@ -21,6 +21,7 @@ class SelectableTextView : UIView {
     }
     @objc var onSelection: RCTDirectEventBlock?
     @objc var onClick: RCTDirectEventBlock?
+    @objc var onMeasure: RCTDirectEventBlock?
     @objc var sentences: NSArray = [] {
         didSet {
             var newSenteces: [Sentence] = []
@@ -83,7 +84,7 @@ class SelectableTextView : UIView {
             print("onCommentClick: \(menu.title)")
         }
     }
-    @objc func handleTap(_ gestureRecognizer: UITapGestureRecognizer) {        
+    @objc func handleTap(_ gestureRecognizer: UITapGestureRecognizer) {
         let location = gestureRecognizer.location(in: textView)
         let tappedTextPosition = textView.closestPosition(to: location)
         
@@ -114,19 +115,28 @@ class SelectableTextView : UIView {
         self.addSubview(textView)
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         self.addGestureRecognizer(tapGesture)
+        textView.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            textView.topAnchor.constraint(equalTo: topAnchor),
             textView.leadingAnchor.constraint(equalTo: leadingAnchor),
             textView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            textView.bottomAnchor.constraint(equalTo: safeAreaLayoutGuide.bottomAnchor)
+            textView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
-        textView.setContentHuggingPriority(.defaultLow, for: .vertical) // Lower priority for hugging
-        textView.setContentCompressionResistancePriority(.defaultHigh, for: .vertical) // Higher priority for compression resistance
     }
-    //    override func layoutSubviews() {
-    //        super.layoutSubviews()
-    //        self.sizeToFit()
-    //    }
+    override func layoutSubviews() {
+        let width = textView.frame.width
+        let height = textView.frame.height
+        onMeasure!(["width": width, "height": height])
+        super.layoutSubviews()
+//        var frame = self.frame
+//        let newWidth = textView.frame.width
+//        let newHeight = textView.frame.height
+//        frame.size = CGSize(width: newWidth, height: newHeight)
+//        widthAnchor.constraint(equalToConstant: newWidth).isActive = true
+//        heightAnchor.constraint(equalToConstant: newHeight).isActive = true
+
+//        self.frame = frame
+    }
     override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         if action == #selector(onSelectCallback) {
             return true
@@ -150,3 +160,4 @@ class SelectableTextView : UIView {
         return UIColor(red: r / 255.0, green: g / 255.0, blue: b / 255.0, alpha: 1)
     }
 }
+
