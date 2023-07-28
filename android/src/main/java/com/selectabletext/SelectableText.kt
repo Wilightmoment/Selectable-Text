@@ -17,12 +17,13 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
+import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.uimanager.events.RCTEventEmitter
 
 
 data class Sentence(
-  val start_time: Int,
-  val end_time: Int,
+  val start_time: Double,
+  val end_time: Double,
   val content: String,
   val index: Int,
 )
@@ -30,15 +31,19 @@ data class Sentence(
 class CustomClickableSpan(private val clickedSentence: Sentence, private val context: Context?) : ClickableSpan() {
   override fun onClick(view: View) {
     val event = Arguments.createMap()
+    val readableArray = Arguments.createArray()
+    val result = Arguments.createMap()
     event.putString("content", clickedSentence.content)
     event.putInt("index", clickedSentence.index)
-    event.putInt("end_time", clickedSentence.end_time)
-    event.putInt("start_time", clickedSentence.start_time)
+    event.putDouble("end_time", clickedSentence.end_time)
+    event.putDouble("start_time", clickedSentence.start_time)
+    readableArray.pushMap(event)
+    result.putArray("selectedSentences", readableArray)
     // Dispatch
     val reactContext = context as ReactContext
     reactContext
       .getJSModule(RCTEventEmitter::class.java)
-      .receiveEvent(view.id, "topClickSentence", event)
+      .receiveEvent(view.id, "topClickSentence", result)
   }
 
   override fun updateDrawState(ds: TextPaint) {

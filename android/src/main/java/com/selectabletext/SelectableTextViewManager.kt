@@ -17,7 +17,7 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
   override fun createViewInstance(reactContext: ThemedReactContext): SelectableText {
     return SelectableText(reactContext)
   }
-
+  private var sentences: Array<Sentence> = arrayOf()
   @ReactProp(name = "fontSize")
   fun setFontSize(textView: SelectableText, fontSize: String) {
     textView.textSize = fontSize.toFloat()
@@ -28,13 +28,14 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
     for (currentIndex in 0 until sentences.size()) {
       val item = sentences.getMap(currentIndex)
       sentenceList.add(Sentence(
-        start_time = item.getInt("start_time"),
-        end_time = item.getInt("end_time"),
+        start_time = item.getDouble("start_time"),
+        end_time = item.getDouble("end_time"),
         content = item.getString("content") ?: "",
         index = item.getInt("index")
       ))
     }
-    textView.setSentences(sentenceList.toTypedArray())
+    this.sentences = sentenceList.toTypedArray()
+    textView.setSentences(this.sentences)
   }
 
   @ReactProp(name = "textColor")
@@ -58,10 +59,10 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
     for (i in 0 until items.size()) {
       result.add(items.getString(i))
     }
-    registerSelectionListener(result.toTypedArray(), textView)
+    registerSelectionListener(result.toTypedArray(), textView, this.sentences)
   }
 
-  private fun registerSelectionListener(menuItems: Array<String?>, textView: SelectableText) {
+  private fun registerSelectionListener(menuItems: Array<String?>, textView: SelectableText, sentences: Array<Sentence>) {
     textView.customSelectionActionModeCallback = object : ActionMode.Callback {
       override fun onPrepareActionMode(mode: ActionMode?, menu: Menu): Boolean {
         // Called when action mode is first created. The menu supplied
@@ -87,10 +88,12 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
         val selectionStart = textView.selectionStart
         val selectionEnd = textView.selectionEnd
         val selectedText = textView.text.toString().substring(selectionStart, selectionEnd)
-        val selectedSentences = mutableSetOf<Int>()
+        val selectedSentences = mutableSetOf<Sentence>()
         for (i in selectionStart..selectionEnd) {
           textView.sentenceIndexMap.forEach { item ->
-            if (item.value.contains(i)) selectedSentences.add(item.key)
+            if (item.value.contains(i)) {
+              selectedSentences.add(sentences[item.key])
+            }
           }
         }
 
@@ -102,7 +105,7 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
     }
   }
 
-  fun onSelectNativeEvent(view: SelectableText, eventType: String?, content: String?, selectionStart: Int, selectionEnd: Int, selectedSentences: MutableSet<Int>) {
+  fun onSelectNativeEvent(view: SelectableText, eventType: String?, content: String?, selectionStart: Int, selectionEnd: Int, selectedSentences: MutableSet<Sentence>) {
     val event = Arguments.createMap()
     event.putString("eventType", eventType)
     event.putString("content", content)
@@ -110,7 +113,12 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
     event.putInt("selectionEnd", selectionEnd)
     val readableArray = WritableNativeArray()
     selectedSentences.forEach { selected ->
-      readableArray.pushInt(selected)
+      val map = Arguments.createMap()
+      map.putString("content", selected.content)
+      map.putDouble("start_time", selected.start_time)
+      map.putDouble("end_time", selected.end_time)
+      map.putInt("index", selected.index)
+      readableArray.pushMap(map)
     }
     event.putArray("selectedSentences", readableArray)
     // Dispatch
