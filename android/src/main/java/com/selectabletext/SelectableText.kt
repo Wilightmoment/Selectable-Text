@@ -20,12 +20,10 @@ import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.WritableNativeArray
 import com.facebook.react.uimanager.events.RCTEventEmitter
 
-
 data class Sentence(
-  val start_time: Double,
-  val end_time: Double,
-  val content: String,
-  val index: Int,
+  val others: MutableMap<String, Any>,
+  var index: Int,
+  var content: String,
 )
 
 class CustomClickableSpan(private val clickedSentence: Sentence, private val context: Context?) : ClickableSpan() {
@@ -35,8 +33,10 @@ class CustomClickableSpan(private val clickedSentence: Sentence, private val con
     val result = Arguments.createMap()
     event.putString("content", clickedSentence.content)
     event.putInt("index", clickedSentence.index)
-    event.putDouble("end_time", clickedSentence.end_time)
-    event.putDouble("start_time", clickedSentence.start_time)
+    clickedSentence.others.forEach { item ->
+      event.putString(item.key, item.value.toString())
+    }
+
     readableArray.pushMap(event)
     result.putArray("selectedSentences", readableArray)
     // Dispatch

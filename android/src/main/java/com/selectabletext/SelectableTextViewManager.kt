@@ -25,14 +25,21 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
   @ReactProp(name = "sentences")
   fun setSentences(textView: SelectableText, sentences: ReadableArray) {
     val sentenceList = mutableListOf<Sentence>()
+
     for (currentIndex in 0 until sentences.size()) {
       val item = sentences.getMap(currentIndex)
-      sentenceList.add(Sentence(
-        start_time = item.getDouble("start_time"),
-        end_time = item.getDouble("end_time"),
-        content = item.getString("content") ?: "",
-        index = item.getInt("index")
-      ))
+      val iterator = item.keySetIterator()
+      val sentence = Sentence(content = "", index = 0, others = mutableMapOf())
+      sentence.content = item.getString("content") ?: ""
+      sentence.index = item.getInt("index")
+      while (iterator.hasNextKey()) {
+        val key = iterator.nextKey()
+        if (key == "content" || key == "index") {
+          continue;
+        }
+        sentence.others[key] = item.getString(key).toString()
+      }
+      sentenceList.add(sentence)
     }
     this.sentences = sentenceList.toTypedArray()
     textView.setSentences(this.sentences)
@@ -115,9 +122,12 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
     selectedSentences.forEach { selected ->
       val map = Arguments.createMap()
       map.putString("content", selected.content)
-      map.putDouble("start_time", selected.start_time)
-      map.putDouble("end_time", selected.end_time)
       map.putInt("index", selected.index)
+      selected.others.forEach {item ->
+        map.putString(item.key, item.value.toString())
+      }
+//      map.putDouble("start_time", selected.start_time)
+//      map.putDouble("end_time", selected.end_time)
       readableArray.pushMap(map)
     }
     event.putArray("selectedSentences", readableArray)

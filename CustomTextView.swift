@@ -9,9 +9,8 @@ import Foundation
 
 struct Sentence {
     let content: String
-    let start_time: Float
-    let end_time: Float
     let index: Int
+    var others: [String: String]
 }
 
 class CustomTextView: UITextView {
@@ -53,12 +52,14 @@ class CustomTextView: UITextView {
         }
         let find = selectedSentences.sorted().map { index in
             let item = self.sentences[index]
-            return [
+            var map = [
                 "content": item.content,
                 "index": item.index,
-                "start_time": item.start_time,
-                "end_time": item.end_time
             ] as [String : Any]
+            item.others.forEach { (key, value) in
+                map[key] = value
+            }
+            return map
         }
         return find
     }

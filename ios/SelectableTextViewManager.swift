@@ -26,8 +26,17 @@ class SelectableTextView : UIView {
         didSet {
             var newSenteces: [Sentence] = []
             for case let item as [String: Any] in sentences {
-                let item = Sentence(content: item["content"] as? String ?? "", start_time: item["start_time"] as? Float ?? 0, end_time: item["end_time"] as? Float ?? 0, index: item["index"] as? Int ?? 0)
-                newSenteces.append(item)
+                
+//                let item = Sentence(content: item["content"] as? String ?? "", start_time: item["start_time"] as? Float ?? 0, end_time: item["end_time"] as? Float ?? 0, index: item["index"] as? Int ?? 0)
+            
+                var sentence = Sentence(content: item["content"] as? String ?? "", index: item["index"] as? Int ?? 0, others: [:])
+                item.forEach { (key, value) in
+                    if (key == "content" || key == "index") {
+                        return
+                    }
+                    sentence.others[key] = value as? String
+                }
+                newSenteces.append(sentence)
             }
             print("didSet sentences: ", newSenteces)
             textView.setSentences(newSenteces)
@@ -116,26 +125,13 @@ class SelectableTextView : UIView {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
         self.addGestureRecognizer(tapGesture)
         textView.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            textView.topAnchor.constraint(equalTo: topAnchor),
-            textView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            textView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            textView.bottomAnchor.constraint(equalTo: bottomAnchor)
-        ])
     }
     override func layoutSubviews() {
         let width = textView.frame.width
         let height = textView.frame.height
         onMeasure!(["width": width, "height": height])
-        super.layoutSubviews()
-//        var frame = self.frame
-//        let newWidth = textView.frame.width
-//        let newHeight = textView.frame.height
-//        frame.size = CGSize(width: newWidth, height: newHeight)
-//        widthAnchor.constraint(equalToConstant: newWidth).isActive = true
-//        heightAnchor.constraint(equalToConstant: newHeight).isActive = true
-
-//        self.frame = frame
+        print("layoutSubviews")
+        //        super.layoutSubviews()
     }
     override func canPerformAction(_ action: Selector, withSender sender: Any?) -> Bool {
         if action == #selector(onSelectCallback) {

@@ -22,8 +22,7 @@ type ClickResult = {
   selectedSentences: Array<Sentence>
 }
 type Sentence = {
-  start_time: number;
-  end_time: number;
+  [key: string]: string | number;
   content: string;
   index: number;
 };
