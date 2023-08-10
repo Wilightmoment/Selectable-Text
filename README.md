@@ -11,11 +11,34 @@ npm install react-native-selectable-text
 ## Usage
 
 ```js
-import { SelectableTextView } from "react-native-selectable-text";
-
+import { useState } from 'react';
+import { SelectableTextView } from 'react-native-selectable-text';
+const sentences = [
+  {
+    content: 'this is first sentence',
+    index: 1,
+    // another props if you want, but value's type must be String
+    // ex: text: "example"
+  },
+  { content: " and im' second", index: 2 },
+];
+const [size, setSize] = useState({ width: 0, height: 0 });
 // ...
 
-<SelectableTextView color="tomato" />
+<SelectableTextView
+  menuItems={['Comment', 'Height']} // required
+  playingIndex={1}
+  playingColor="#dfe8ff"
+  textColor="#667280"
+  onSelection={(event) => {
+    console.log('onSelection: ', event.nativeEvent);
+  }}
+  onMeasure={(event) => setSize(event.nativeEvent)} // required to get height
+  onClick={(event) => console.log('onClick: ', event.nativeEvent)}
+  sentences={sentences} // required
+  style={{ height: size.height }} // required
+  fontSize="16"
+/>;
 ```
 
 ## Contributing
