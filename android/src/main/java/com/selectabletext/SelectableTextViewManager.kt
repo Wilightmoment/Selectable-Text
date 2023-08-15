@@ -1,5 +1,8 @@
 package com.selectabletext
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
@@ -86,12 +89,14 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
   private fun registerSelectionListener(menuItems: Array<String?>, textView: SelectableText, sentences: Array<Sentence>) {
     textView.customSelectionActionModeCallback = object : ActionMode.Callback {
       override fun onPrepareActionMode(mode: ActionMode?, menu: Menu): Boolean {
-        Log.d("mode", mode.toString())
-        // Called when action mode is first created. The menu supplied
-        // will be used to generate action buttons for the action mode
-        // Android Smart Linkify feature pushes extra options into the menu
-        // and would override the generated menu items
-        menu.clear()
+        for (i in menu.size() - 1 downTo 0) {
+          val menuItem = menu.getItem(i)
+          if (menuItem.itemId != android.R.id.copy) {
+            menu.removeItem(menuItem.itemId)
+          }
+        }
+
+//        menu.clear()
         for (index in menuItems.indices) {
           menu.add(0, index, 0, menuItems[index])
         }
@@ -111,9 +116,17 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
         val selectionEnd = textView.selectionEnd
         val selectedText = textView.text.toString().substring(selectionStart, selectionEnd)
         val selectedSentences = mutableSetOf<Sentence>()
+
+        if (item.itemId == android.R.id.copy) {
+          val clipboardManager = textView.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+          val clipData = ClipData.newPlainText("text", selectedText)
+          clipboardManager.setPrimaryClip(clipData)
+          return true
+        }
+
         for (i in selectionStart..selectionEnd) {
           textView.sentenceIndexMap.forEach { item ->
-            if (item.value.contains(i)) {
+            if (item.value.contains(i) && item.key < sentences.size) {
               selectedSentences.add(sentences[item.key])
             }
           }
@@ -128,29 +141,31 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
   }
 
   fun onSelectNativeEvent(view: SelectableText, eventType: String?, content: String?, selectionStart: Int, selectionEnd: Int, selectedSentences: MutableSet<Sentence>) {
-    val event = Arguments.createMap()
-    event.putString("eventType", eventType)
-    event.putString("content", content)
-    event.putInt("selectionStart", selectionStart)
-    event.putInt("selectionEnd", selectionEnd)
-    val readableArray = WritableNativeArray()
-    selectedSentences.forEach { selected ->
-      val map = Arguments.createMap()
-      map.putString("content", selected.content)
-      map.putInt("index", selected.index)
-      selected.others.forEach {item ->
-        map.putString(item.key, item.value.toString())
+    try {
+      val event = Arguments.createMap()
+      event.putString("eventType", eventType)
+      event.putString("content", content)
+      event.putInt("selectionStart", selectionStart)
+      event.putInt("selectionEnd", selectionEnd)
+      val readableArray = WritableNativeArray()
+      selectedSentences.forEach { selected ->
+        val map = Arguments.createMap()
+        map.putString("content", selected.content)
+        map.putInt("index", selected.index)
+        selected.others.forEach {item ->
+          map.putString(item.key, item.value.toString())
+        }
+        readableArray.pushMap(map)
       }
-//      map.putDouble("start_time", selected.start_time)
-//      map.putDouble("end_time", selected.end_time)
-      readableArray.pushMap(map)
+      event.putArray("selectedSentences", readableArray)
+      // Dispatch
+      val reactContext = view.context as ReactContext
+      reactContext
+        .getJSModule(RCTEventEmitter::class.java)
+        .receiveEvent(view.id, "topSelection", event)
+    } catch (error: Error) {
+      Log.e("onSelectNativeEvent", "$error", error)
     }
-    event.putArray("selectedSentences", readableArray)
-    // Dispatch
-    val reactContext = view.context as ReactContext
-    reactContext
-      .getJSModule(RCTEventEmitter::class.java)
-      .receiveEvent(view.id, "topSelection", event)
   }
   override fun getExportedCustomBubblingEventTypeConstants(): Map<String, Any> {
     return mapOf(
