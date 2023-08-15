@@ -1,9 +1,5 @@
 package com.selectabletext
 
-import android.content.Context
-import android.text.Layout
-import android.text.StaticLayout
-import android.text.TextPaint
 import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
@@ -12,63 +8,10 @@ import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.WritableNativeArray
-import com.facebook.react.common.mapbuffer.MapBuffer
-import com.facebook.react.uimanager.LayoutShadowNode
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.uimanager.events.RCTEventEmitter
-import com.facebook.yoga.YogaMeasureFunction
-import com.facebook.yoga.YogaMeasureMode
-import com.facebook.yoga.YogaMeasureOutput
-import com.facebook.yoga.YogaNode
-
-
-class GradientTextShadowNode(
-  private val text: String,
-  private val density: Float,
-  private val fontSize: Int,
-  ) : LayoutShadowNode(), YogaMeasureFunction {
-  init {
-    setMeasureFunction(this)
-  }
-  override fun measure(
-    node: YogaNode,
-    width: Float, widthMode: YogaMeasureMode,
-    height: Float, heightMode: YogaMeasureMode
-  ): Long {
-//    Log.d("measure text length", text.length.toString())
-    val newHeight = getTextPaintHeight(text, fontSize, width.toInt(), 0) * density
-    return YogaMeasureOutput.make(0, newHeight.toInt() + 1)
-  }
-}
-
-fun getTextPaintHeight(
-  text: String?,
-  textSize: Int,  // in pixels
-  deviceWidth: Int,  // in pixels
-  padding: Int // in pixels
-): Int {
-  val myTextPaint = TextPaint()
-  myTextPaint.isAntiAlias = true
-  // this is how you would convert sp to pixels based on screen density
-  //myTextPaint.setTextSize(16 * context.getResources().getDisplayMetrics().density);
-  myTextPaint.textSize = textSize.toFloat()
-  val alignment = Layout.Alignment.ALIGN_NORMAL
-  val spacingMultiplier = 1f
-  val spacingAddition = padding.toFloat() // optionally apply padding here
-  val includePadding = padding != 0
-  val myStaticLayout = StaticLayout(
-    text,
-    myTextPaint,
-    deviceWidth,
-    alignment,
-    spacingMultiplier,
-    spacingAddition,
-    includePadding
-  )
-  return myStaticLayout.height
-}
 
 class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
   private var sentences: Array<Sentence> = arrayOf()
@@ -135,12 +78,11 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
       result.add(items.getString(i))
     }
     registerSelectionListener(result.toTypedArray(), textView, this.sentences)
-    Log.d("menuItems", textView.isTextSelectable.toString())
+//    Log.d("menuItems", textView.isTextSelectable.toString())
   }
-  override fun createShadowNodeInstance(): LayoutShadowNode {
-    return GradientTextShadowNode(this.text, this.density, this.fontSize)
+  override fun createShadowNodeInstance(): SelectableTextShadowNode {
+    return SelectableTextShadowNode()
   }
-
   private fun registerSelectionListener(menuItems: Array<String?>, textView: SelectableText, sentences: Array<Sentence>) {
     textView.customSelectionActionModeCallback = object : ActionMode.Callback {
       override fun onPrepareActionMode(mode: ActionMode?, menu: Menu): Boolean {

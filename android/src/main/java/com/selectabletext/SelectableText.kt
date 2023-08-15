@@ -73,6 +73,7 @@ class SelectableText: AppCompatTextView {
     val height = measureContentHeight(text.toString(), paint, width)
     val density = this.resources.displayMetrics.density
     val event = Arguments.createMap()
+//    this.shadowNode!!.setStyleHeight(height.toFloat())
     event.putDouble("width", (width / density).toDouble())
     event.putDouble("height", (height / density).toDouble())
     // Dispatch
