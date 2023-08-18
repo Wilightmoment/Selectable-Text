@@ -23,7 +23,6 @@
 //
 //UITextPosition *selectionStart;
 UITextPosition* beginning;
-NSInteger playingIndex;
 - (instancetype)initWithBridge:(RCTBridge *)bridge
 {
     if (self = [super initWithBridge:bridge]) {
@@ -42,7 +41,7 @@ NSInteger playingIndex;
         _backedTextInputView.selectable = YES;
         beginning = _backedTextInputView.beginningOfDocument;
         self.playingBgColor = [UIColor clearColor];
-        playingIndex = -1;
+        self.playingSentence = [[NSNumber alloc] initWithInt: -1];
         
         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget: self action:@selector(onTapCallback:)];
         [_backedTextInputView addGestureRecognizer:tapGesture];
@@ -103,18 +102,19 @@ NSInteger playingIndex;
     self.playingBgColor = [self hexStringToUIColor:playingColor];
     [self setPlayingSentence];
 }
-//- (void) setPlayingIndex:(NSNumber *)_playingIndex {
-//    playingIndex = [_playingIndex integerValue];
-//    [self setPlayingSentence];
-//}
+- (void) setPlayingIndex:(NSNumber *)playingIndex {
+    self.playingSentence = playingIndex;
+    [self setPlayingSentence];
+}
 - (void) setPlayingSentence {
     if (!self.formatedSentences || !self.text) return;
     NSLog(@"myText: %@", self.text);
     NSInteger startIndex = -1;
     NSInteger currentIndex = 0;
     NSInteger endIndex = 0;
+    NSLog(@"playingIndex %@", self.playingSentence);
     for (Sentence *sentence in self.formatedSentences) {
-        if (playingIndex == sentence.index) {
+        if ([self.playingSentence integerValue] == sentence.index) {
             endIndex = sentence.content.length;
             break;
         }
@@ -124,8 +124,11 @@ NSInteger playingIndex;
     NSLog(@"startIndex: %lu", startIndex);
     NSLog(@"endIndex: %lu", endIndex);
     [self clearBackgroundColor];
-    if (currentIndex < self.formatedSentences.count) {
-        [self.text addAttribute:NSBackgroundColorAttributeName value:self.playingBgColor range:NSMakeRange(startIndex + 1, endIndex)];
+    if (currentIndex < self.formatedSentences.count && self.playingBgColor) {
+        
+        NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
+        [mutableAttributedString addAttribute:NSBackgroundColorAttributeName value:self.playingBgColor range:NSMakeRange(startIndex + 1, endIndex)];
+        self.text = mutableAttributedString;
     }
     [super setAttributedText:self.text];
 }
@@ -146,10 +149,11 @@ NSInteger playingIndex;
     [super setAttributedText:self.text];
 }
 - (void)setTextColor:(NSString *)textColor {
-    //    NSMutableAttributedString *mutableAttributedText = [self.attributedText mutableCopy];
+    NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
     UIColor *newColor = [self hexStringToUIColor:textColor];
     self.textColorOfHex = newColor;
-    [self.text addAttribute:NSForegroundColorAttributeName value:newColor range:NSMakeRange(0, self.text.length)];
+    [mutableAttributedString addAttribute:NSForegroundColorAttributeName value:newColor range:NSMakeRange(0, mutableAttributedString.length)];
+    self.text = mutableAttributedString;
     [super setAttributedText:self.text];
 }
 - (UIColor *)hexStringToUIColor:(NSString *)hexColor {
@@ -190,10 +194,9 @@ NSInteger playingIndex;
         @"content": [[self.attributedText string] substringWithRange:NSMakeRange(startIndex, endIndex - startIndex)],
         @"eventType": menuItem.title
     });
-    
+    [_backedTextInputView setSelectedRange:NSMakeRange(0, 0)];
 }
 - (NSArray<Sentence *> *) getSentences:(NSInteger)start end:(NSInteger)end {
-
     NSMutableSet *set = [NSMutableSet set];
     NSMutableArray<Sentence *> *newSentences = [NSMutableArray array];
     for (NSInteger index = start; index < end; index++) {
@@ -204,7 +207,6 @@ NSInteger playingIndex;
     for (NSString *index in set) {
         NSInteger key = [index integerValue];
         if ([self.sentenceDict.allKeys containsObject:@(key)]) {
-            Sentence *aa = self.sentenceDict[@(key)];
             [newSentences addObject: self.sentenceDict[@(key)]];
         }
     }
@@ -226,6 +228,7 @@ NSInteger playingIndex;
 }
 - (void)onTapCallback:(UITapGestureRecognizer *)gestureRecognizer {
     if (!self.onClick) return;
+    [_backedTextInputView setSelectedRange:NSMakeRange(0, 0)];
     CGPoint location = [gestureRecognizer locationInView:_backedTextInputView];
     UITextPosition *tappedTextPosition = [_backedTextInputView closestPositionToPoint:location];
     UITextRange *textRange = [_backedTextInputView.tokenizer rangeEnclosingPosition:tappedTextPosition withGranularity:UITextGranularityWord inDirection:UITextWritingDirectionLeftToRight];

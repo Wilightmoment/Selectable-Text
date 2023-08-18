@@ -31,7 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSMutableAttributedString *text;
 @property (nonatomic, copy) UIColor *playingBgColor;
 @property (nonatomic, copy) UIColor *textColorOfHex;
-//@property (nonatomic, copy) NSInteger *playingIndex;
+@property (nonatomic, copy) NSNumber *playingSentence;
 @end
 
 NS_ASSUME_NONNULL_END
