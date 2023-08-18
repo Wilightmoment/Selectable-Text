@@ -30,9 +30,6 @@ type SelectableTextProps = {
   menuItems: Array<String>;
   onSelection?: (event: NativeTouchEvent & { nativeEvent: Selection }) => void;
   onClick?: (event: NativeTouchEvent & { nativeEvent: ClickResult }) => void;
-  onMeasure?: (
-    event: NativeTouchEvent & { nativeEvent: { width: number; height: number } }
-  ) => void;
   sentences: Sentence[];
   playingIndex?: number;
   playingColor?: string;
