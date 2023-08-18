@@ -23,10 +23,6 @@
 //
 //UITextPosition *selectionStart;
 UITextPosition* beginning;
-NSMutableArray<Sentence *> *formatedSentences;
-NSMutableDictionary<NSNumber *, NSNumber *> *sentenceIndexMap;
-UIColor *playingBgColor;
-NSMutableAttributedString *attributedString;
 NSInteger playingIndex;
 - (instancetype)initWithBridge:(RCTBridge *)bridge
 {
@@ -45,9 +41,9 @@ NSInteger playingIndex;
         _backedTextInputView.editable = NO;
         _backedTextInputView.selectable = YES;
         beginning = _backedTextInputView.beginningOfDocument;
-        playingBgColor = [UIColor clearColor];
+        self.playingBgColor = [UIColor clearColor];
         playingIndex = -1;
-        attributedString = [self.attributedText mutableCopy];
+        
         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget: self action:@selector(onTapCallback:)];
         [_backedTextInputView addGestureRecognizer:tapGesture];
         [self addSubview:_backedTextInputView];
@@ -63,6 +59,7 @@ NSInteger playingIndex;
 - (void)setSentences:(NSArray<NSDictionary<NSString *,id> *> *)sentences {
     NSMutableArray<Sentence *> *newSentences = [NSMutableArray array];
     NSMutableDictionary<NSNumber *, NSNumber *> *newSentenceIndexMap = [NSMutableDictionary dictionary];
+    NSMutableDictionary<NSNumber *, Sentence *> *newSentenceDict = [NSMutableDictionary dictionary];
     NSMutableString *pargraph = [NSMutableString stringWithString:@""];
     NSUInteger currentIndex = 0;
     NSUInteger lastCount = 0;
@@ -79,15 +76,20 @@ NSInteger playingIndex;
             [newSentenceIndexMap setObject:@(currentIndex) forKey:@(i + lastCount)];
         }
         [newSentences addObject:sentence];
+        [newSentenceDict setObject:sentence forKey:@(sentence.index)];
+        NSLog(@"sentenceDict: %@", newSentenceDict);
         lastCount += sentence.content.length;
         currentIndex++;
     }
-    sentenceIndexMap = newSentenceIndexMap;
-    formatedSentences = newSentences;
-
+    self.sentenceIndexMap = newSentenceIndexMap;
+    self.formatedSentences = newSentences;
+    self.sentenceDict = newSentenceDict;
     if (pargraph.length > 0) {
-        NSAttributedString *str = [[NSAttributedString alloc] initWithString:pargraph attributes:self.textAttributes.effectiveTextAttributes];
-        attributedString = [str mutableCopy];
+        NSMutableAttributedString *str = [[NSMutableAttributedString alloc] initWithString:pargraph attributes:self.textAttributes.effectiveTextAttributes];
+        if (self.textColorOfHex) {
+            [str addAttribute:NSForegroundColorAttributeName value:self.textColorOfHex range:NSMakeRange(0, str.length)];
+        }
+        self.text = [str mutableCopy];
         [self setPlayingSentence];
     }
 }
@@ -98,20 +100,20 @@ NSInteger playingIndex;
 }
 - (void) setPlayingColor:(NSString *)playingColor {
     if (!playingColor) return;
-    playingBgColor = [self hexStringToUIColor:playingColor];
-    [self setPlayingSentence];
-    
-}
-- (void) setPlayingIndex:(NSNumber *)_playingIndex {
-    playingIndex = [_playingIndex integerValue];
+    self.playingBgColor = [self hexStringToUIColor:playingColor];
     [self setPlayingSentence];
 }
+//- (void) setPlayingIndex:(NSNumber *)_playingIndex {
+//    playingIndex = [_playingIndex integerValue];
+//    [self setPlayingSentence];
+//}
 - (void) setPlayingSentence {
-    if (!formatedSentences || !attributedString) return;
+    if (!self.formatedSentences || !self.text) return;
+    NSLog(@"myText: %@", self.text);
     NSInteger startIndex = -1;
     NSInteger currentIndex = 0;
     NSInteger endIndex = 0;
-    for (Sentence *sentence in formatedSentences) {
+    for (Sentence *sentence in self.formatedSentences) {
         if (playingIndex == sentence.index) {
             endIndex = sentence.content.length;
             break;
@@ -122,27 +124,33 @@ NSInteger playingIndex;
     NSLog(@"startIndex: %lu", startIndex);
     NSLog(@"endIndex: %lu", endIndex);
     [self clearBackgroundColor];
-    if (currentIndex < formatedSentences.count) {
-        [attributedString addAttribute:NSBackgroundColorAttributeName value:playingBgColor range:NSMakeRange(startIndex + 1, endIndex)];
+    if (currentIndex < self.formatedSentences.count) {
+        [self.text addAttribute:NSBackgroundColorAttributeName value:self.playingBgColor range:NSMakeRange(startIndex + 1, endIndex)];
     }
-    [super setAttributedText:attributedString];
+    [super setAttributedText:self.text];
 }
 - (void)clearBackgroundColor {
-    [attributedString removeAttribute:NSBackgroundColorAttributeName range:NSMakeRange(0, attributedString.length)];
-    [super setAttributedText:attributedString];
+    // Assuming self.text is an NSAttributedString or NSMutableAttributedString
+    NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
+    
+    // Remove background color attribute
+    [mutableAttributedString removeAttribute:NSBackgroundColorAttributeName range:NSMakeRange(0, mutableAttributedString.length)];
+    
+    // Assign the modified attributed string back to self.text
+    self.text = mutableAttributedString;
+    [super setAttributedText:self.text];
 }
 - (void)setFontSize:(NSString *)fontSize {
     UIFont *newFont = [UIFont systemFontOfSize:[fontSize integerValue]];
-    [attributedString addAttribute:NSFontAttributeName value:newFont range:NSMakeRange(0, attributedString.length)];
-    [super setAttributedText:attributedString];
+    [self.text addAttribute:NSFontAttributeName value:newFont range:NSMakeRange(0, self.text.length)];
+    [super setAttributedText:self.text];
 }
 - (void)setTextColor:(NSString *)textColor {
-//    NSMutableAttributedString *mutableAttributedText = [self.attributedText mutableCopy];
+    //    NSMutableAttributedString *mutableAttributedText = [self.attributedText mutableCopy];
     UIColor *newColor = [self hexStringToUIColor:textColor];
-    [attributedString enumerateAttributesInRange:NSMakeRange(0, attributedString.length) options:0 usingBlock:^(NSDictionary<NSAttributedStringKey, id> * _Nonnull attrs, NSRange range, BOOL * _Nonnull stop) {
-        [attributedString addAttribute:NSForegroundColorAttributeName value:newColor range:range];
-    }];
-    [super setAttributedText:attributedString];
+    self.textColorOfHex = newColor;
+    [self.text addAttribute:NSForegroundColorAttributeName value:newColor range:NSMakeRange(0, self.text.length)];
+    [super setAttributedText:self.text];
 }
 - (UIColor *)hexStringToUIColor:(NSString *)hexColor {
     NSScanner *stringScanner = [NSScanner scannerWithString:hexColor];
@@ -174,7 +182,7 @@ NSInteger playingIndex;
     NSInteger startIndex = [_backedTextInputView offsetFromPosition:beginning toPosition:selectionRange.start];
     NSInteger endIndex = [_backedTextInputView offsetFromPosition:beginning toPosition:selectionRange.end];
     NSArray<Sentence *> *findSentences = [self getSentences:startIndex end:endIndex];
-    
+    NSLog(@"findSentences: %@", findSentences);
     self.onSelection(@{
         @"selectedSentences": [self convertSentencesToArray:findSentences],
         @"selectionStart": @(startIndex),
@@ -185,24 +193,28 @@ NSInteger playingIndex;
     
 }
 - (NSArray<Sentence *> *) getSentences:(NSInteger)start end:(NSInteger)end {
-    NSLog(@"start: %li, end: %li", start, end);
+
     NSMutableSet *set = [NSMutableSet set];
     NSMutableArray<Sentence *> *newSentences = [NSMutableArray array];
     for (NSInteger index = start; index < end; index++) {
-        if ([sentenceIndexMap.allKeys containsObject:@(index)]) {
-            [set addObject:sentenceIndexMap[@(index)]];
+        if ([self.sentenceIndexMap.allKeys containsObject:@(index)]) {
+            [set addObject:self.sentenceIndexMap[@(index)]];
         }
     }
     for (NSString *index in set) {
         NSInteger key = [index integerValue];
-        [newSentences addObject: formatedSentences[key]];
+        if ([self.sentenceDict.allKeys containsObject:@(key)]) {
+            Sentence *aa = self.sentenceDict[@(key)];
+            [newSentences addObject: self.sentenceDict[@(key)]];
+        }
     }
     return newSentences;
 }
 - (NSArray *)convertSentencesToArray: (NSArray<Sentence *>*) sentences {
-    NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
+    
     NSMutableArray *formatedArray = [[NSMutableArray alloc] init];
     for (Sentence *sentence in sentences) {
+        NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
         for (NSString *key in sentence.others) {
             [dict setValue:sentence.others[key] forKey:key];
         }
@@ -217,10 +229,10 @@ NSInteger playingIndex;
     CGPoint location = [gestureRecognizer locationInView:_backedTextInputView];
     UITextPosition *tappedTextPosition = [_backedTextInputView closestPositionToPoint:location];
     UITextRange *textRange = [_backedTextInputView.tokenizer rangeEnclosingPosition:tappedTextPosition withGranularity:UITextGranularityWord inDirection:UITextWritingDirectionLeftToRight];
-
+    
     NSInteger offsetStart = [_backedTextInputView offsetFromPosition:beginning toPosition:textRange.start];
     NSInteger offsetEnd = [_backedTextInputView offsetFromPosition:textRange.start toPosition:textRange.end];
-
+    
     NSString *tappedText = [[self.attributedText string] substringWithRange:NSMakeRange(offsetStart, offsetEnd)];
     NSArray *tappedSentences = [self convertSentencesToArray:[self getSentences:offsetStart end:(offsetStart + offsetEnd)]];
     self.onClick(@{
