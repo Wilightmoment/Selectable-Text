@@ -4,19 +4,6 @@
 //
 //  Created by JoshChen on 2023/8/16.
 //
-
-#if __has_include(<RCTText/RCTTextSelection.h>)
-#import <RCTText/RCTTextSelection.h>
-#else
-#import "RCTTextSelection.h"
-#endif
-
-#if __has_include(<RCTText/RCTUITextView.h>)
-#import <RCTText/RCTUITextView.h>
-#else
-#import "RCTUITextView.h"
-#endif
-
 #import "SelectableTextView.h"
 
 #if __has_include(<RCTText/RCTTextAttributes.h>)
@@ -27,6 +14,7 @@
 
 #import <React/RCTUtils.h>
 #import "Sentence.h"
+#import "TextView.h"
 @implementation SelectableTextView
 {
     RCTUITextView *_backedTextInputView;
@@ -43,7 +31,7 @@ NSInteger playingIndex;
 - (instancetype)initWithBridge:(RCTBridge *)bridge
 {
     if (self = [super initWithBridge:bridge]) {
-        _backedTextInputView = [[RCTUITextView alloc] initWithFrame:self.bounds];
+        _backedTextInputView = [[TextView alloc] initWithFrame:self.bounds];
         _backedTextInputView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         _backedTextInputView.backgroundColor = [UIColor clearColor];
         _backedTextInputView.textColor = [UIColor blackColor];
@@ -62,7 +50,6 @@ NSInteger playingIndex;
         attributedString = [self.attributedText mutableCopy];
         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget: self action:@selector(onTapCallback:)];
         [_backedTextInputView addGestureRecognizer:tapGesture];
-    
         [self addSubview:_backedTextInputView];
         [self setUserInteractionEnabled:YES];
     }
