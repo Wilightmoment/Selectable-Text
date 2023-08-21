@@ -118,8 +118,7 @@ UITextPosition* beginning;
         startIndex += sentence.content.length;
         currentIndex++;
     }
-    NSLog(@"startIndex: %lu", startIndex);
-    NSLog(@"endIndex: %lu", endIndex);
+    NSLog(@"playingSentence offset: %lu, %lu", startIndex, endIndex);
     [self clearBackgroundColor];
     
     if (currentIndex < self.formatedSentences.count && self.playingBgColor) {
