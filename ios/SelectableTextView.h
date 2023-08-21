@@ -9,7 +9,7 @@
 #else
 #import "RCTBaseTextInputView.h"
 #endif
-
+#import "Sentence.h"
 #ifndef SelectableTextView_h
 #define SelectableTextView_h
 
@@ -25,7 +25,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) NSNumber *playingIndex;
 @property (nonatomic, copy) RCTDirectEventBlock onSelection;
 @property (nonatomic, copy) RCTDirectEventBlock onClick;
-
+@property (nonatomic, copy) NSMutableArray<Sentence *> *formatedSentences;
+@property (nonatomic, copy) NSMutableDictionary<NSNumber *, NSNumber *> *sentenceIndexMap;
+@property (nonatomic, copy) NSMutableDictionary<NSNumber *, Sentence *> *sentenceDict;
+@property (nonatomic, copy) NSMutableAttributedString *text;
+@property (nonatomic, copy) UIColor *playingBgColor;
+@property (nonatomic, copy) UIColor *textColorOfHex;
+@property (nonatomic, copy) NSNumber *playingSentence;
+@property (nonatomic, copy) UIFont *textSize;
 @end
 
 NS_ASSUME_NONNULL_END

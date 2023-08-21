@@ -32,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) UIColor *playingBgColor;
 @property (nonatomic, copy) UIColor *textColorOfHex;
 @property (nonatomic, copy) NSNumber *playingSentence;
+@property (nonatomic, copy) UIFont *textSize;
 @end
 
 NS_ASSUME_NONNULL_END

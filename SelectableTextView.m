@@ -60,7 +60,6 @@ UITextPosition* beginning;
     NSMutableDictionary<NSNumber *, NSNumber *> *newSentenceIndexMap = [NSMutableDictionary dictionary];
     NSMutableDictionary<NSNumber *, Sentence *> *newSentenceDict = [NSMutableDictionary dictionary];
     NSMutableString *pargraph = [NSMutableString stringWithString:@""];
-    NSUInteger currentIndex = 0;
     NSUInteger lastCount = 0;
     for (NSDictionary<NSString *, id> *item in sentences) {
         Sentence *sentence = [[Sentence alloc] initWithContent:item[@"content"] ?: @"" index:[item[@"index"] integerValue] others:@{}];
@@ -72,13 +71,12 @@ UITextPosition* beginning;
             sentence.others[key] = [item[key] isKindOfClass:[NSString class]] ? item[key] : @"";
         }
         for (NSUInteger i = 0; i < [sentence.content length]; i++) {
-            [newSentenceIndexMap setObject:@(currentIndex) forKey:@(i + lastCount)];
+            [newSentenceIndexMap setObject:item[@"index"] forKey:@(i + lastCount)];
         }
         [newSentences addObject:sentence];
         [newSentenceDict setObject:sentence forKey:@(sentence.index)];
         NSLog(@"sentenceDict: %@", newSentenceDict);
         lastCount += sentence.content.length;
-        currentIndex++;
     }
     self.sentenceIndexMap = newSentenceIndexMap;
     self.formatedSentences = newSentences;
@@ -108,7 +106,6 @@ UITextPosition* beginning;
 }
 - (void) setPlayingSentence {
     if (!self.formatedSentences || !self.text) return;
-    NSLog(@"myText: %@", self.text);
     NSInteger startIndex = -1;
     NSInteger currentIndex = 0;
     NSInteger endIndex = 0;
@@ -124,9 +121,11 @@ UITextPosition* beginning;
     NSLog(@"startIndex: %lu", startIndex);
     NSLog(@"endIndex: %lu", endIndex);
     [self clearBackgroundColor];
+    
     if (currentIndex < self.formatedSentences.count && self.playingBgColor) {
         
         NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
+        NSLog(@"playingBgColor: %@", self.playingBgColor);
         [mutableAttributedString addAttribute:NSBackgroundColorAttributeName value:self.playingBgColor range:NSMakeRange(startIndex + 1, endIndex)];
         self.text = mutableAttributedString;
     }
@@ -144,11 +143,17 @@ UITextPosition* beginning;
     [super setAttributedText:self.text];
 }
 - (void)setFontSize:(NSString *)fontSize {
+    if (!fontSize) return;
+    NSLog(@"setFontSize %@", fontSize);
+    NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
     UIFont *newFont = [UIFont systemFontOfSize:[fontSize integerValue]];
-    [self.text addAttribute:NSFontAttributeName value:newFont range:NSMakeRange(0, self.text.length)];
+    self.textSize = newFont;
+    [mutableAttributedString addAttribute:NSFontAttributeName value:newFont range:NSMakeRange(0, mutableAttributedString.length)];
+    self.text = mutableAttributedString;
     [super setAttributedText:self.text];
 }
 - (void)setTextColor:(NSString *)textColor {
+    NSLog(@"setTextColor %@", textColor);
     NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
     UIColor *newColor = [self hexStringToUIColor:textColor];
     self.textColorOfHex = newColor;
@@ -204,6 +209,8 @@ UITextPosition* beginning;
             [set addObject:self.sentenceIndexMap[@(index)]];
         }
     }
+    NSLog(@"sentenceIndexMap: %@", self.sentenceIndexMap);
+    NSLog(@"sentenceDict: %@", self.sentenceDict);
     for (NSString *index in set) {
         NSInteger key = [index integerValue];
         if ([self.sentenceDict.allKeys containsObject:@(key)]) {
@@ -237,6 +244,7 @@ UITextPosition* beginning;
     NSInteger offsetEnd = [_backedTextInputView offsetFromPosition:textRange.start toPosition:textRange.end];
     
     NSString *tappedText = [[self.attributedText string] substringWithRange:NSMakeRange(offsetStart, offsetEnd)];
+    NSLog(@"tap-offset: %lu, %lu", offsetStart, offsetEnd);
     NSArray *tappedSentences = [self convertSentencesToArray:[self getSentences:offsetStart end:(offsetStart + offsetEnd)]];
     self.onClick(@{
         @"selectedSentences": tappedSentences,
