@@ -40,6 +40,8 @@ UITextPosition* beginning;
         _backedTextInputView.editable = NO;
         _backedTextInputView.selectable = YES;
         beginning = _backedTextInputView.beginningOfDocument;
+        self.textSize = [UIFont systemFontOfSize: 14];
+        self.textColorOfHex = [UIColor blackColor];
         self.playingBgColor = [UIColor clearColor];
         self.playingSentence = [[NSNumber alloc] initWithInt: -1];
         
@@ -47,6 +49,7 @@ UITextPosition* beginning;
         [_backedTextInputView addGestureRecognizer:tapGesture];
         [self addSubview:_backedTextInputView];
         [self setUserInteractionEnabled:YES];
+        [self setAutoFocus:false];
     }
     
     return self;
@@ -82,11 +85,7 @@ UITextPosition* beginning;
     self.formatedSentences = newSentences;
     self.sentenceDict = newSentenceDict;
     if (pargraph.length > 0) {
-        NSMutableAttributedString *str = [[NSMutableAttributedString alloc] initWithString:pargraph attributes:self.textAttributes.effectiveTextAttributes];
-        if (self.textColorOfHex) {
-            [str addAttribute:NSForegroundColorAttributeName value:self.textColorOfHex range:NSMakeRange(0, str.length)];
-        }
-        self.text = [str mutableCopy];
+        self.text = pargraph;
         [self setPlayingSentence];
     }
 }
@@ -109,7 +108,7 @@ UITextPosition* beginning;
     NSInteger startIndex = -1;
     NSInteger currentIndex = 0;
     NSInteger endIndex = 0;
-    NSLog(@"playingIndex %@", self.playingSentence);
+//    NSLog(@"playingIndex %@", self.playingSentence);
     for (Sentence *sentence in self.formatedSentences) {
         if ([self.playingSentence integerValue] == sentence.index) {
             endIndex = sentence.content.length;
@@ -118,47 +117,34 @@ UITextPosition* beginning;
         startIndex += sentence.content.length;
         currentIndex++;
     }
-    NSLog(@"playingSentence offset: %lu, %lu", startIndex, endIndex);
-    [self clearBackgroundColor];
-    
+    //    [self clearBackgroundColor];
+    NSMutableAttributedString *mutableAttributedString = [[NSMutableAttributedString alloc] initWithString:self.text];
+    NSDictionary *attributes = @{
+        NSFontAttributeName: self.textSize,
+        NSForegroundColorAttributeName: self.textColorOfHex
+    };
+    [mutableAttributedString addAttributes:attributes range:NSMakeRange(0, self.text.length)];
     if (currentIndex < self.formatedSentences.count && self.playingBgColor) {
-        
-        NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
-        NSLog(@"playingBgColor: %@", self.playingBgColor);
+        NSLog(@"playingSentence offset: %lu, %lu", startIndex + 1, endIndex);
+        NSLog(@"playingSentence index: %@", self.playingSentence);
+        NSLog(@"playingSentence color: %@", self.playingBgColor);
         [mutableAttributedString addAttribute:NSBackgroundColorAttributeName value:self.playingBgColor range:NSMakeRange(startIndex + 1, endIndex)];
-        self.text = mutableAttributedString;
     }
-    [super setAttributedText:self.text];
-}
-- (void)clearBackgroundColor {
-    // Assuming self.text is an NSAttributedString or NSMutableAttributedString
-    NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
-    
-    // Remove background color attribute
-    [mutableAttributedString removeAttribute:NSBackgroundColorAttributeName range:NSMakeRange(0, mutableAttributedString.length)];
-    
-    // Assign the modified attributed string back to self.text
-    self.text = mutableAttributedString;
-    [super setAttributedText:self.text];
+    [super setAttributedText:mutableAttributedString];
+    [_backedTextInputView setAttributedText:mutableAttributedString];
 }
 - (void)setFontSize:(NSString *)fontSize {
     if (!fontSize) return;
     NSLog(@"setFontSize %@", fontSize);
-    NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
     UIFont *newFont = [UIFont systemFontOfSize:[fontSize integerValue]];
     self.textSize = newFont;
-    [mutableAttributedString addAttribute:NSFontAttributeName value:newFont range:NSMakeRange(0, mutableAttributedString.length)];
-    self.text = mutableAttributedString;
-    [super setAttributedText:self.text];
+    [self setPlayingSentence];
 }
 - (void)setTextColor:(NSString *)textColor {
     NSLog(@"setTextColor %@", textColor);
-    NSMutableAttributedString *mutableAttributedString = [self.text mutableCopy];
     UIColor *newColor = [self hexStringToUIColor:textColor];
     self.textColorOfHex = newColor;
-    [mutableAttributedString addAttribute:NSForegroundColorAttributeName value:newColor range:NSMakeRange(0, mutableAttributedString.length)];
-    self.text = mutableAttributedString;
-    [super setAttributedText:self.text];
+    [self setPlayingSentence];
 }
 - (UIColor *)hexStringToUIColor:(NSString *)hexColor {
     NSScanner *stringScanner = [NSScanner scannerWithString:hexColor];

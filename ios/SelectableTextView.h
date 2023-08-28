@@ -28,7 +28,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSMutableArray<Sentence *> *formatedSentences;
 @property (nonatomic, copy) NSMutableDictionary<NSNumber *, NSNumber *> *sentenceIndexMap;
 @property (nonatomic, copy) NSMutableDictionary<NSNumber *, Sentence *> *sentenceDict;
-@property (nonatomic, copy) NSMutableAttributedString *text;
+@property (nonatomic, copy) NSString *text;
 @property (nonatomic, copy) UIColor *playingBgColor;
 @property (nonatomic, copy) UIColor *textColorOfHex;
 @property (nonatomic, copy) NSNumber *playingSentence;
