@@ -1,17 +1,17 @@
-# react-native-selectable-text
+# react-native-selectable-lyrics
 
 A selectable text with react native
 
 ## Installation
 
 ```sh
-npm install react-native-selectable-text
+npm install react-native-selectable-lyrics
 ```
 
 ## Usage
 
 ```js
-import { SelectableTextView } from 'react-native-selectable-text';
+import { SelectableTextView } from 'react-native-selectable-lyrics';
 const sentences = [
   {
     content: 'this is first sentence',

@@ -1,5 +1,5 @@
 {
-  "name": "react-native-selectable-text",
+  "name": "react-native-selectable-lyrics",
   "version": "0.1.0",
   "description": "A selectable text with react native",
   "main": "lib/commonjs/index",
