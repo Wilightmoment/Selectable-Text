@@ -104,6 +104,11 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
       }
 
       override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean {
+        val event = Arguments.createMap()
+        val reactContext = textView.context as ReactContext
+        reactContext
+          .getJSModule(RCTEventEmitter::class.java)
+          .receiveEvent(textView.id, "topMenuShown", event)
         return true
       }
 
@@ -182,6 +187,11 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
       "topMeasure" to mapOf(
         "phasedRegistrationNames" to mapOf(
           "bubbled" to "onMeasure"
+        )
+      ),
+      "topMenuShown" to mapOf(
+        "phasedRegistrationNames" to mapOf(
+          "bubbled" to "onMenuShown"
         )
       ),
     )

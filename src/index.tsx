@@ -30,6 +30,7 @@ type SelectableTextProps = {
   menuItems: Array<String>;
   onSelection?: (event: NativeTouchEvent & { nativeEvent: Selection }) => void;
   onClick?: (event: NativeTouchEvent & { nativeEvent: ClickResult }) => void;
+  onMenuShown?: (event: NativeTouchEvent) => void; // android only
   sentences: Sentence[];
   playingIndex?: number;
   playingColor?: string;
