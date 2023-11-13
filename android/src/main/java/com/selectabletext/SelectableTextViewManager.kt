@@ -71,7 +71,21 @@ class SelectableTextViewManager : SimpleViewManager<SelectableText>() {
 
   @ReactProp(name = "playingIndex")
   fun setPlayingIndex(textView: SelectableText, index: Int) {
-    textView.changePlayingSentence(index)
+    textView.setPlayingIndex(index)
+  }
+
+  @ReactProp(name = "highlightIndexes")
+  fun setHighlightIndexes(textView: SelectableText, highlightIndexes: ReadableArray) {
+    val indexList = mutableListOf<Int>()
+    for (currentIndex in 0 until highlightIndexes.size()) {
+      indexList.add(highlightIndexes.getInt(currentIndex))
+    }
+    textView.setHighlightIndexes(indexList.toTypedArray())
+  }
+
+  @ReactProp(name = "highlightColor")
+  fun setHighlightColor(textView: SelectableText, highlightColor: String) {
+    textView.setHighlightColor(highlightColor)
   }
 
   @ReactProp(name = "menuItems")

@@ -25,6 +25,10 @@ data class Sentence(
   var index: Int,
   var content: String,
 )
+data class SpannableStringPosition(
+  val start: Int,
+  val end: Int,
+)
 
 class CustomClickableSpan(private val clickedSentence: Sentence, private val context: Context?) : ClickableSpan() {
   override fun onClick(view: View) {
@@ -64,6 +68,8 @@ class SelectableText: AppCompatTextView {
   private var sentences: Array<Sentence> = arrayOf()
   private var textColorSpan = ForegroundColorSpan(Color.GREEN)
   private var playingBGColorSpan = BackgroundColorSpan(Color.BLUE)
+  private var highlightBGColor = Color.YELLOW
+  private var highlightIndexes: Array<Int> = arrayOf()
   private var playingIndex = 0
   var sentenceIndexMap: Map<Int, List<Int>> = mutableMapOf()
 
@@ -91,14 +97,14 @@ class SelectableText: AppCompatTextView {
   fun setPlayingBGColor(hex: String) {
     this.spannableBuilder.removeSpan(this.playingBGColorSpan)
     this.playingBGColorSpan = BackgroundColorSpan(Color.parseColor(hex))
-    this.changePlayingSentence(this.playingIndex)
+    this.renderText()
   }
 
   fun setTextColor(hex: String) {
     this.spannableBuilder.removeSpan(this.textColorSpan)
     this.textColorSpan = ForegroundColorSpan(Color.parseColor(hex))
     this.spannableBuilder.setSpan(this.textColorSpan, 0, this.spannableBuilder.length, Spannable.SPAN_INCLUSIVE_INCLUSIVE)
-    this.changePlayingSentence(this.playingIndex)
+    this.renderText()
   }
 
   fun setSentences(sentences: Array<Sentence>) {
@@ -112,19 +118,41 @@ class SelectableText: AppCompatTextView {
       sentenceIndexMap += Pair(currentIndex, sentenceIndexArray)
       lastCount = sentenceIndexArray.size
     }
-    this.changePlayingSentence(this.playingIndex)
+    this.renderText()
     this.movementMethod = LinkMovementMethod.getInstance()
   }
 
-  fun changePlayingSentence(index: Int) {
-    this.playingIndex = index
-    this.spannableBuilder.removeSpan(this.playingBGColorSpan)
+  fun setHighlightIndexes(highlightIndexes: Array<Int>) {
+    this.highlightIndexes = highlightIndexes
+    this.renderText()
+  }
+  fun setHighlightColor(hex: String) {
+    this.highlightBGColor = Color.parseColor(hex)
+  }
+  private fun changeHighlightSentences() {
+    val existingSpans = this.spannableBuilder.getSpans(0, this.spannableBuilder.length, BackgroundColorSpan::class.java)
+    for (span in existingSpans) {
+      if (span.backgroundColor == this.highlightBGColor) {
+        this.spannableBuilder.removeSpan(span)
+      }
+    }
+    for (highlightIndex in this.highlightIndexes) {
+      val spannablePosition = getSpannableStringPosition(highlightIndex)
+      if (spannablePosition.start == -1) {
+        continue
+      }
+
+      this.spannableBuilder.setSpan(BackgroundColorSpan(this.highlightBGColor), spannablePosition.start, spannablePosition.end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+    }
+    this.text = this.spannableBuilder
+  }
+
+  private fun getSpannableStringPosition(sentenceIndex: Int): SpannableStringPosition {
     val startIndex = this.sentences.indexOfFirst {
-      it.index == index
+      it.index == sentenceIndex
     }
     if (startIndex == -1) {
-      this.text = this.spannableBuilder
-      return
+      return SpannableStringPosition(-1, -1)
     }
     var spannableStart = 0
     for ((sentenceIndex, sentence) in this.sentences.withIndex()) {
@@ -132,7 +160,28 @@ class SelectableText: AppCompatTextView {
       spannableStart += sentence.content.length
     }
     val spannableEnd = spannableStart + this.sentences[startIndex].content.length
-    this.spannableBuilder.setSpan(this.playingBGColorSpan, spannableStart, spannableEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+    return SpannableStringPosition(spannableStart, spannableEnd)
+  }
+
+  fun setPlayingIndex(index: Int) {
+    this.playingIndex = index
+    this.renderText()
+  }
+  private fun changePlayingSentence() {
+    this.spannableBuilder.removeSpan(this.playingBGColorSpan)
+    val spannablePosition = getSpannableStringPosition(this.playingIndex)
+
+    if (spannablePosition.start == -1) {
+      this.text = this.spannableBuilder
+      return
+    }
+    this.spannableBuilder.setSpan(this.playingBGColorSpan, spannablePosition.start, spannablePosition.end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
     this.text = this.spannableBuilder
+  }
+  private fun renderText() {
+    this.changeHighlightSentences()
+    this.changePlayingSentence()
   }
 }
