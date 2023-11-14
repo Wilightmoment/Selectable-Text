@@ -19,8 +19,8 @@ type Selection = {
   selectionEnd?: number;
 };
 type ClickResult = {
-  selectedSentences: Array<Sentence>
-}
+  selectedSentences: Array<Sentence>;
+};
 type Sentence = {
   [key: string]: string | number;
   content: string;
@@ -33,6 +33,8 @@ type SelectableTextProps = {
   onMenuShown?: (event: NativeTouchEvent) => void; // android only
   sentences: Sentence[];
   playingIndex?: number;
+  highlightIndexes?: number[];
+  highlightColor?: string;
   playingColor?: string;
   textColor?: string;
   style?: ViewStyle;
