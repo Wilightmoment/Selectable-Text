@@ -27,6 +27,8 @@ RCT_EXPORT_VIEW_PROPERTY(textColor, NSString);
 RCT_EXPORT_VIEW_PROPERTY(fontSize, NSString);
 RCT_EXPORT_VIEW_PROPERTY(playingIndex, NSNumber);
 RCT_EXPORT_VIEW_PROPERTY(playingColor, NSString);
+RCT_EXPORT_VIEW_PROPERTY(highlightColor, NSString);
+RCT_EXPORT_VIEW_PROPERTY(highlightIndexes, NSArray);
 #pragma mark - Multiline <TextInput> (aka TextView) specific properties
 
 #if !TARGET_OS_TV

@@ -10,6 +10,7 @@
 #import "RCTBaseTextInputView.h"
 #endif
 #import "Sentence.h"
+#import "AttributedStringRange.h"
 #ifndef SelectableTextView_h
 #define SelectableTextView_h
 
@@ -19,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonnull, nonatomic, copy) NSArray<NSDictionary<NSString *, id> *> *sentences;
 @property (nullable, nonatomic, copy) NSArray<NSString *> *menuItems;
+@property (nullable, nonatomic, copy) NSArray<NSNumber *> *highlightIndexes;
 @property (nullable, nonatomic, copy) NSString *textColor;
 @property (nullable, nonatomic, copy) NSString *fontSize;
 @property (nullable, nonatomic, copy) NSString *playingColor;
@@ -26,10 +28,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) RCTDirectEventBlock onSelection;
 @property (nonatomic, copy) RCTDirectEventBlock onClick;
 @property (nonatomic, copy) NSMutableArray<Sentence *> *formatedSentences;
+@property (nonatomic, copy) NSArray<NSNumber *> *highlightSentences;
 @property (nonatomic, copy) NSMutableDictionary<NSNumber *, NSNumber *> *sentenceIndexMap;
 @property (nonatomic, copy) NSMutableDictionary<NSNumber *, Sentence *> *sentenceDict;
 @property (nonatomic, copy) NSString *text;
 @property (nonatomic, copy) UIColor *playingBgColor;
+@property (nonatomic, copy) UIColor *highlightBGColor;
 @property (nonatomic, copy) UIColor *textColorOfHex;
 @property (nonatomic, copy) NSNumber *playingSentence;
 @property (nonatomic, copy) UIFont *textSize;

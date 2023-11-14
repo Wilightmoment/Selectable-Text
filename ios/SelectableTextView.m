@@ -15,6 +15,8 @@
 #import <React/RCTUtils.h>
 #import "Sentence.h"
 #import "TextView.h"
+#import "AttributedStringRange.h"
+
 @implementation SelectableTextView
 {
     RCTUITextView *_backedTextInputView;
@@ -43,6 +45,7 @@ UITextPosition* beginning;
         self.textSize = [UIFont systemFontOfSize: 14];
         self.textColorOfHex = [UIColor blackColor];
         self.playingBgColor = [UIColor clearColor];
+        self.highlightBGColor = [UIColor clearColor];
         self.playingSentence = [[NSNumber alloc] initWithInt: -1];
         
         UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget: self action:@selector(onTapCallback:)];
@@ -86,7 +89,7 @@ UITextPosition* beginning;
     self.sentenceDict = newSentenceDict;
     if (pargraph.length > 0) {
         self.text = pargraph;
-        [self setPlayingSentence];
+        [self renderText];
     }
 }
 
@@ -97,38 +100,35 @@ UITextPosition* beginning;
 - (void) setPlayingColor:(NSString *)playingColor {
     if (!playingColor) return;
     self.playingBgColor = [self hexStringToUIColor:playingColor];
-    [self setPlayingSentence];
+    [self renderText];
 }
 - (void) setPlayingIndex:(NSNumber *)playingIndex {
     self.playingSentence = playingIndex;
-    [self setPlayingSentence];
+    [self renderText];
+}
+- (AttributedStringRange *)getAttributedStringPosition:(NSNumber *) playingSentenceIndex {
+    AttributedStringRange *result = [[AttributedStringRange alloc] init];
+    result.startIndex = -1;
+    result.endIndex = 0;
+    result.startIndex = 0;
+    if (!self.formatedSentences) return result;
+    for (Sentence *sentence in self.formatedSentences) {
+        if ([playingSentenceIndex integerValue] == sentence.index) {
+            result.endIndex = sentence.content.length;
+            break;
+        }
+        result.startIndex += sentence.content.length;
+        result.currentIndex++;
+    }
+    return result;
 }
 - (void) setPlayingSentence {
     if (!self.formatedSentences || !self.text) return;
-    NSInteger startIndex = -1;
-    NSInteger currentIndex = 0;
-    NSInteger endIndex = 0;
-//    NSLog(@"playingIndex %@", self.playingSentence);
-    for (Sentence *sentence in self.formatedSentences) {
-        if ([self.playingSentence integerValue] == sentence.index) {
-            endIndex = sentence.content.length;
-            break;
-        }
-        startIndex += sentence.content.length;
-        currentIndex++;
-    }
-    //    [self clearBackgroundColor];
-    NSMutableAttributedString *mutableAttributedString = [[NSMutableAttributedString alloc] initWithString:self.text];
-    NSDictionary *attributes = @{
-        NSFontAttributeName: self.textSize,
-        NSForegroundColorAttributeName: self.textColorOfHex
-    };
-    [mutableAttributedString addAttributes:attributes range:NSMakeRange(0, self.text.length)];
-    if (currentIndex < self.formatedSentences.count && self.playingBgColor) {
-        NSLog(@"playingSentence offset: %lu, %lu", startIndex + 1, endIndex);
-        NSLog(@"playingSentence index: %@", self.playingSentence);
-        NSLog(@"playingSentence color: %@", self.playingBgColor);
-        [mutableAttributedString addAttribute:NSBackgroundColorAttributeName value:self.playingBgColor range:NSMakeRange(startIndex + 1, endIndex)];
+    NSMutableAttributedString *mutableAttributedString = [self getAttributedText];
+    [self removeBackgroundColor:mutableAttributedString color:self.playingBgColor];
+    AttributedStringRange *result = [self getAttributedStringPosition:self.playingSentence];
+    if (result.currentIndex < self.formatedSentences.count && self.playingBgColor) {
+        [mutableAttributedString addAttribute:NSBackgroundColorAttributeName value:self.playingBgColor range:NSMakeRange(result.startIndex, result.endIndex)];
     }
     [super setAttributedText:mutableAttributedString];
     [_backedTextInputView setAttributedText:mutableAttributedString];
@@ -138,13 +138,67 @@ UITextPosition* beginning;
     NSLog(@"setFontSize %@", fontSize);
     UIFont *newFont = [UIFont systemFontOfSize:[fontSize integerValue]];
     self.textSize = newFont;
+    [self renderText];
+}
+- (void)setHighlightIndexes:(NSArray<NSNumber *> *)highlightIndexes {
+    self.highlightSentences = highlightIndexes;
+    [self renderText];
+}
+- (NSMutableAttributedString *) getAttributedText {
+    // 假設你的原始 attributedText 存儲在 originalAttributedString 中
+    NSAttributedString *originalAttributedString = _backedTextInputView.attributedText;
+    bool hasAttributedString = originalAttributedString.length > 0;
+    // 初始化一個新的 NSMutableAttributedString，如果 originalAttributedString 為 null
+    NSMutableAttributedString *newAttributedString = (hasAttributedString) ? [[NSMutableAttributedString alloc] initWithAttributedString:originalAttributedString] : [[NSMutableAttributedString alloc] initWithString:self.text];
+    if (hasAttributedString) {
+        NSDictionary *attributes = @{
+            NSFontAttributeName: self.textSize,
+            NSForegroundColorAttributeName: self.textColorOfHex
+        };
+        [newAttributedString addAttributes:attributes range:NSMakeRange(0, self.text.length)];
+    }
+    return newAttributedString;
+
+}
+- (void)setHighlightSentence {
+    if (!self.formatedSentences || !self.text || !self.highlightSentences) return;
+    NSMutableAttributedString *mutableAttributedString = [self getAttributedText];
+    [self removeBackgroundColor:mutableAttributedString color:self.highlightBGColor];
+    for (NSNumber *key in self.highlightSentences) {
+        AttributedStringRange *result = [self getAttributedStringPosition:key];
+        if (result.currentIndex < self.formatedSentences.count && self.highlightBGColor) {
+            NSLog(@"mutableAttributedString %lu", mutableAttributedString.length);
+            NSLog(@"result startIndex %lu", result.startIndex);
+            NSLog(@"result endIndex %lu", result.endIndex);
+            [mutableAttributedString addAttribute:NSBackgroundColorAttributeName value:self.highlightBGColor range:NSMakeRange(result.startIndex, result.endIndex)];
+        }
+    }
+    [super setAttributedText:mutableAttributedString];
+    [_backedTextInputView setAttributedText:mutableAttributedString];
+}
+- (void)removeBackgroundColor:(NSMutableAttributedString *)attributedString color:(UIColor *)color {
+    if (attributedString != nil) {}
+    [attributedString enumerateAttribute:NSBackgroundColorAttributeName inRange:NSMakeRange(0, attributedString.length) options:0 usingBlock:^(id value, NSRange range, BOOL *stop) {
+        if ([value isKindOfClass:[UIColor class]] && [value isEqual:color]) {
+            [attributedString removeAttribute:NSBackgroundColorAttributeName range:range];
+        }
+    }];
+}
+- (void)renderText {
+    [self setHighlightSentence];
     [self setPlayingSentence];
 }
 - (void)setTextColor:(NSString *)textColor {
     NSLog(@"setTextColor %@", textColor);
     UIColor *newColor = [self hexStringToUIColor:textColor];
     self.textColorOfHex = newColor;
-    [self setPlayingSentence];
+    [self renderText];
+}
+- (void)setHighlightColor:(NSString *) highlightColor {
+    NSLog(@"setHighlightColor %@", highlightColor);
+    UIColor *newColor = [self hexStringToUIColor:highlightColor];
+    self.highlightBGColor = newColor;
+    [self renderText];
 }
 - (UIColor *)hexStringToUIColor:(NSString *)hexColor {
     NSScanner *stringScanner = [NSScanner scannerWithString:hexColor];

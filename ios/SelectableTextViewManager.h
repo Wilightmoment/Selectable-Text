@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nullable, nonatomic, copy) NSString *fontSize;
 @property (nullable, nonatomic, copy) NSString *playingColor;
 @property (nullable, nonatomic, copy) NSNumber *playingIndex;
+@property (nullable, nonatomic, copy) NSArray<NSNumber *> *highlightIndexes;
+@property (nullable, nonatomic, copy) NSString *highlightColor;
 @property (nonatomic, copy) RCTDirectEventBlock onSelection;
 @property (nonatomic, copy) RCTDirectEventBlock onClick;
 @end
