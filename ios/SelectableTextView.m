@@ -145,17 +145,27 @@ UITextPosition* beginning;
     [self renderText];
 }
 - (NSMutableAttributedString *) getAttributedText {
-    // 假設你的原始 attributedText 存儲在 originalAttributedString 中
     NSAttributedString *originalAttributedString = _backedTextInputView.attributedText;
     bool hasAttributedString = originalAttributedString.length > 0;
     // 初始化一個新的 NSMutableAttributedString，如果 originalAttributedString 為 null
     NSMutableAttributedString *newAttributedString = (hasAttributedString) ? [[NSMutableAttributedString alloc] initWithAttributedString:originalAttributedString] : [[NSMutableAttributedString alloc] initWithString:self.text];
-    if (hasAttributedString) {
-        NSDictionary *attributes = @{
-            NSFontAttributeName: self.textSize,
-            NSForegroundColorAttributeName: self.textColorOfHex
-        };
-        [newAttributedString addAttributes:attributes range:NSMakeRange(0, self.text.length)];
+    // 檢查第一個字符的字體大小
+    NSRange detectRange = NSMakeRange(0, 1); // 這裡只檢查第一個字符，你可以根據需要調整範圍
+    NSRange range = NSMakeRange(0, self.text.length);
+    UIFont *currentFont = [newAttributedString attribute:NSFontAttributeName atIndex:detectRange.location effectiveRange:nil];
+    UIColor *currentTextColor = [newAttributedString attribute:NSForegroundColorAttributeName atIndex:detectRange.location effectiveRange:nil];
+
+    // 如果字體顏色不等於預期的顏色，則進行更改
+    if (![currentTextColor isEqual:self.textColorOfHex]) {
+        // 設置新的字體顏色
+        [newAttributedString addAttribute:NSForegroundColorAttributeName value:self.textColorOfHex range:range];
+    }
+    // 如果字體大小不等於預期的大小，則進行更改
+    if (currentFont.pointSize != self.textSize.pointSize) {
+        // 創建一個新的字體
+        UIFont *newFont = [UIFont fontWithName:currentFont.fontName size:self.textSize.pointSize];
+        // 設置新的字體
+        [newAttributedString addAttribute:NSFontAttributeName value:newFont range:range];
     }
     return newAttributedString;
 
@@ -167,9 +177,6 @@ UITextPosition* beginning;
     for (NSNumber *key in self.highlightSentences) {
         AttributedStringRange *result = [self getAttributedStringPosition:key];
         if (result.currentIndex < self.formatedSentences.count && self.highlightBGColor) {
-            NSLog(@"mutableAttributedString %lu", mutableAttributedString.length);
-            NSLog(@"result startIndex %lu", result.startIndex);
-            NSLog(@"result endIndex %lu", result.endIndex);
             [mutableAttributedString addAttribute:NSBackgroundColorAttributeName value:self.highlightBGColor range:NSMakeRange(result.startIndex, result.endIndex)];
         }
     }
@@ -177,12 +184,13 @@ UITextPosition* beginning;
     [_backedTextInputView setAttributedText:mutableAttributedString];
 }
 - (void)removeBackgroundColor:(NSMutableAttributedString *)attributedString color:(UIColor *)color {
-    if (attributedString != nil) {}
-    [attributedString enumerateAttribute:NSBackgroundColorAttributeName inRange:NSMakeRange(0, attributedString.length) options:0 usingBlock:^(id value, NSRange range, BOOL *stop) {
-        if ([value isKindOfClass:[UIColor class]] && [value isEqual:color]) {
-            [attributedString removeAttribute:NSBackgroundColorAttributeName range:range];
-        }
-    }];
+    if (attributedString != nil) {
+        [attributedString enumerateAttribute:NSBackgroundColorAttributeName inRange:NSMakeRange(0, attributedString.length) options:0 usingBlock:^(id value, NSRange range, BOOL *stop) {
+            if ([value isKindOfClass:[UIColor class]] && [value isEqual:color]) {
+                [attributedString removeAttribute:NSBackgroundColorAttributeName range:range];
+            }
+        }];
+    }
 }
 - (void)renderText {
     [self setHighlightSentence];
