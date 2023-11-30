@@ -42,7 +42,7 @@ UITextPosition* beginning;
         _backedTextInputView.editable = NO;
         _backedTextInputView.selectable = YES;
         beginning = _backedTextInputView.beginningOfDocument;
-        self.textSize = [UIFont systemFontOfSize: 14];
+        self.textSize = [UIFont systemFontOfSize: 15];
         self.textColorOfHex = [UIColor blackColor];
         self.playingBgColor = [UIColor clearColor];
         self.highlightBGColor = [UIColor clearColor];
@@ -154,6 +154,8 @@ UITextPosition* beginning;
     NSRange range = NSMakeRange(0, self.text.length);
     UIFont *currentFont = [newAttributedString attribute:NSFontAttributeName atIndex:detectRange.location effectiveRange:nil];
     UIColor *currentTextColor = [newAttributedString attribute:NSForegroundColorAttributeName atIndex:detectRange.location effectiveRange:nil];
+    NSParagraphStyle *currentParagraphStyle = [newAttributedString attribute:NSParagraphStyleAttributeName atIndex:detectRange.location effectiveRange:nil];
+    CGFloat desiredLineSpacing = 2.5;
 
     // 如果字體顏色不等於預期的顏色，則進行更改
     if (![currentTextColor isEqual:self.textColorOfHex]) {
@@ -166,6 +168,11 @@ UITextPosition* beginning;
         UIFont *newFont = [UIFont fontWithName:currentFont.fontName size:self.textSize.pointSize];
         // 設置新的字體
         [newAttributedString addAttribute:NSFontAttributeName value:newFont range:range];
+    }
+    if (currentParagraphStyle.lineSpacing != desiredLineSpacing) {
+        NSMutableParagraphStyle *newParagraphStyle = [[NSMutableParagraphStyle alloc] init];
+        [newParagraphStyle setLineSpacing:desiredLineSpacing];
+        [newAttributedString addAttribute:NSParagraphStyleAttributeName value:newParagraphStyle range:range];
     }
     return newAttributedString;
 
